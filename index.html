@@ -232,6 +232,7 @@
       if (token !== loadToken) return;
       s.relayout();
       status.hidden = true;
+      releaseFocus();
       s.start();
       s.greenFlag();
     } catch (e) {
@@ -245,6 +246,27 @@
       }
     }
   }
+
+  // The player only hears keys whose target is the page body, but inside the popup focus sits on a
+  // button or the popup itself. Release focus so keys reach the game, and forward any that still miss.
+  function releaseFocus() {
+    const a = document.activeElement;
+    if (a && a !== document.body && a.tagName !== 'INPUT' && a.tagName !== 'TEXTAREA') a.blur();
+  }
+  dlg.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('button, input, textarea')) setTimeout(releaseFocus, 0);
+  });
+  dlg.addEventListener('click', (e) => { if (e.target.closest('button')) setTimeout(releaseFocus, 0); });
+  document.addEventListener('keydown', (e) => {
+    if (!dlg.open || !sc) return;
+    const t = e.target;
+    if (t === document || t === document.body) return; // the player handles these itself
+    if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') return; // typing an answer
+    if (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return; // keyboard use of the toolbar
+    if (e.key === 'Escape') return;
+    sc.vm.postIOData('keyboard', { key: e.key, keyCode: e.keyCode, isDown: true });
+    if ([32, 37, 38, 39, 40, 8, 222, 191].includes(e.keyCode)) e.preventDefault();
+  }, true);
 
   document.getElementById('go').onclick = () => sc && sc.greenFlag();
   document.getElementById('stop').onclick = () => sc && sc.stopAll();
