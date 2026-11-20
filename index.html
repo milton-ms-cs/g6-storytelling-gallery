@@ -224,7 +224,14 @@
       s.start();
       s.greenFlag();
     } catch (e) {
-      if (token === loadToken) status.textContent = 'This project could not be loaded.';
+      if (token !== loadToken) return;
+      console.error(e);
+      if (e && e.name === 'OperationError') {
+        try { sessionStorage.removeItem('galleryKey'); } catch (_) {}
+        status.textContent = 'This gallery was just updated. Reload the page and enter the password again.';
+      } else {
+        status.textContent = 'This project could not be loaded.';
+      }
     }
   }
 
